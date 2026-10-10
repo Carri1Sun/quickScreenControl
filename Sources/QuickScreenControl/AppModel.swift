@@ -12,7 +12,6 @@ final class AppModel: ObservableObject {
     @Published private(set) var displays: [DisplayInfo] = []
     @Published var brightness: [CGDirectDisplayID: Int] = [:]
     @Published var contrast: [CGDirectDisplayID: Int] = [:]
-    @Published var inputs: [CGDirectDisplayID: Int] = [:]
     @Published var tint: [CGDirectDisplayID: Int] = [:]
     @Published var message: String?
     @Published var launchAtLogin: Bool = false
@@ -67,25 +66,22 @@ final class AppModel: ObservableObject {
         manager.ddcDevices[d.id] != nil
     }
 
-    /// 后台读取亮度、对比度、输入源，读完回到主线程更新
+    /// 后台读取亮度、对比度，读完回到主线程更新
     func readAllStates() {
         let snapshot = displays
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
             var b: [CGDirectDisplayID: Int] = [:]
             var c: [CGDirectDisplayID: Int] = [:]
-            var i: [CGDirectDisplayID: Int] = [:]
             for d in snapshot {
                 if let v = self.manager.brightness[d.id]?.read() { b[d.id] = v }
                 if let dev = self.manager.ddcDevices[d.id] {
                     if let r = dev.read(vcp: 0x12), r.max > 0 { c[d.id] = r.current * 100 / r.max }
-                    if let r = dev.read(vcp: 0x60) { i[d.id] = r.current }
                 }
             }
             DispatchQueue.main.async {
                 self.brightness.merge(b) { _, new in new }
                 self.contrast.merge(c) { _, new in new }
-                self.inputs.merge(i) { _, new in new }
             }
         }
     }
@@ -109,28 +105,6 @@ final class AppModel: ObservableObject {
     func setTint(_ id: CGDirectDisplayID, _ kelvin: Int) {
         tint[id] = kelvin
         Tint.apply(display: id, kelvin: kelvin)
-    }
-
-    /// 切换输入源前弹确认：切走后 Mac 可能无法再用 DDC 切回
-    func requestInputChange(_ d: DisplayInfo, code: Int) {
-        let alert = NSAlert()
-        alert.messageText = "切换「\(name(for: d))」的输入源到 \(InputSource.name(for: code))？"
-        alert.informativeText = "切换后 Mac 可能无法再通过 DDC 切回，需要按显示器按钮，或在对应设备上操作。"
-        alert.addButton(withTitle: "切换")
-        alert.addButton(withTitle: "取消")
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
-        setInput(d.id, code: code)
-    }
-
-    func setInput(_ id: CGDirectDisplayID, code: Int) {
-        guard let dev = manager.ddcDevices[id] else { return }
-        DispatchQueue.global(qos: .userInitiated).async {
-            let ok = dev.write(vcp: 0x60, value: code)
-            DispatchQueue.main.async {
-                if ok { self.inputs[id] = code; self.notify("已发送输入源切换") }
-                else { self.notify("输入源切换失败") }
-            }
-        }
     }
 
     func mirror(source: DisplayInfo, target: DisplayInfo?) {
@@ -162,8 +136,6 @@ final class AppModel: ObservableObject {
             manager.setMirror(source: src.id, target: tgt?.id ?? 0)
         case .brightness(let d, let v):
             if let disp = display(key: d) { setBrightness(disp.id, v) }
-        case .input(let d, let c):
-            if let disp = display(key: d) { setInput(disp.id, code: c) }
         case .tint(let d, let k):
             if let disp = display(key: d) { setTint(disp.id, k) }
         }

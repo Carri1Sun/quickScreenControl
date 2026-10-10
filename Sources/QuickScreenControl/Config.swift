@@ -6,8 +6,6 @@ enum PresetAction: Codable, Hashable {
     case mirror(source: String, target: String?)
     /// 设置亮度（0-100）
     case brightness(display: String, value: Int)
-    /// 设置输入源（VCP 0x60 的值，如 HDMI1=17、HDMI2=18）
-    case input(display: String, code: Int)
     /// 设置色温（K）
     case tint(display: String, kelvin: Int)
     /// 停止所有镜像
@@ -17,7 +15,6 @@ enum PresetAction: Codable, Hashable {
         switch self {
         case .mirror(let s, let t): return t == nil ? "停止镜像 \(s)" : "镜像 \(s) → \(t!)"
         case .brightness(let d, let v): return "亮度 \(d) = \(v)%"
-        case .input(let d, let c): return "输入 \(d) = \(InputSource.name(for: c))"
         case .tint(let d, let k): return "色温 \(d) = \(k)K"
         case .restoreAll: return "恢复所有屏幕为扩展"
         }
@@ -65,16 +62,6 @@ struct AppConfig: Codable {
         schedules: [],
         aliases: [:]
     )
-}
-
-enum InputSource {
-    static let options: [(name: String, code: Int)] = [
-        ("DP 1", 15), ("DP 2", 16), ("HDMI 1", 17), ("HDMI 2", 18), ("USB-C", 27),
-    ]
-
-    static func name(for code: Int) -> String {
-        options.first { $0.code == code }?.name ?? "输入 \(code)"
-    }
 }
 
 /// 配置文件：~/Library/Application Support/QuickScreenControl/config.json

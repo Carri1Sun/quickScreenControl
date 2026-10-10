@@ -64,7 +64,7 @@ struct PanelView: View {
     }
 }
 
-/// 每块屏幕一张卡片：亮度、对比度、色温、输入源、镜像
+/// 每块屏幕一张卡片：亮度、对比度、色温、镜像
 struct DisplayCard: View {
     @ObservedObject var model: AppModel
     let display: DisplayInfo
@@ -101,7 +101,6 @@ struct DisplayCard: View {
             ), range: 3000...6500, suffix: "K", step: 100)
 
             HStack(spacing: 6) {
-                if model.isDDC(display) { inputMenu }
                 mirrorMenu
                 Spacer()
             }
@@ -121,23 +120,6 @@ struct DisplayCard: View {
                 .font(.caption.monospacedDigit())
                 .frame(width: 52, alignment: .trailing)
         }
-    }
-
-    private var inputMenu: some View {
-        Menu {
-            ForEach(InputSource.options, id: \.code) { option in
-                Button(option.name) { model.requestInputChange(display, code: option.code) }
-            }
-        } label: {
-            Label("输入：\(currentInputName)", systemImage: "arrow.left.arrow.right")
-        }
-        .menuStyle(.borderlessButton)
-        .fixedSize()
-    }
-
-    private var currentInputName: String {
-        guard let code = model.inputs[display.id] else { return "未知" }
-        return InputSource.name(for: code)
     }
 
     private var mirrorMenu: some View {

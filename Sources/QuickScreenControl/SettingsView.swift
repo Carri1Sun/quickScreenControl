@@ -120,14 +120,13 @@ private struct PresetEditor: View {
 /// 动作编辑草稿
 struct ActionDraft {
     enum Kind: String, CaseIterable, Identifiable {
-        case mirror = "镜像", brightness = "亮度", input = "输入源", tint = "色温", restoreAll = "恢复扩展"
+        case mirror = "镜像", brightness = "亮度", tint = "色温", restoreAll = "恢复扩展"
         var id: String { rawValue }
     }
     var kind: Kind = .restoreAll
     var source: String = ""
     var target: String = ""   // 空字符串表示停止镜像
     var value: Int = 50
-    var inputCode: Int = 18
 
     func build() -> PresetAction? {
         switch kind {
@@ -137,8 +136,6 @@ struct ActionDraft {
             return .mirror(source: source, target: target.isEmpty ? nil : target)
         case .brightness:
             return source.isEmpty ? nil : .brightness(display: source, value: value)
-        case .input:
-            return source.isEmpty ? nil : .input(display: source, code: inputCode)
         case .tint:
             return source.isEmpty ? nil : .tint(display: source, kelvin: value)
         }
@@ -170,11 +167,6 @@ private struct ActionDraftView: View {
         }
         if draft.kind == .tint {
             Stepper("色温 \(draft.value)K", value: $draft.value, in: 3000...6500, step: 100)
-        }
-        if draft.kind == .input {
-            Picker("输入源", selection: $draft.inputCode) {
-                ForEach(InputSource.options, id: \.code) { Text($0.name).tag($0.code) }
-            }
         }
     }
 }
