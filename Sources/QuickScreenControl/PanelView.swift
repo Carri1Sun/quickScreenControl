@@ -64,7 +64,7 @@ struct PanelView: View {
     }
 }
 
-/// 每块屏幕一张卡片：亮度、对比度、色温、镜像
+/// 每块屏幕一张卡片：亮度、色温、镜像
 struct DisplayCard: View {
     @ObservedObject var model: AppModel
     let display: DisplayInfo
@@ -86,13 +86,6 @@ struct DisplayCard: View {
                 ), range: 0...100, suffix: "%")
             } else {
                 Text("亮度：此屏幕无可用控制通道").font(.caption).foregroundStyle(.secondary)
-            }
-
-            if model.isDDC(display) {
-                slider("对比度", value: Binding(
-                    get: { model.contrast[display.id] ?? 50 },
-                    set: { model.setContrast(display.id, $0) }
-                ), range: 0...100, suffix: "%")
             }
 
             slider("色温", value: Binding(

@@ -11,7 +11,6 @@ final class AppModel: ObservableObject {
     @Published var config: AppConfig
     @Published private(set) var displays: [DisplayInfo] = []
     @Published var brightness: [CGDirectDisplayID: Int] = [:]
-    @Published var contrast: [CGDirectDisplayID: Int] = [:]
     @Published var tint: [CGDirectDisplayID: Int] = [:]
     @Published var message: String?
     @Published var launchAtLogin: Bool = false
@@ -62,26 +61,17 @@ final class AppModel: ObservableObject {
         manager.brightness[d.id]?.isSupported == true
     }
 
-    func isDDC(_ d: DisplayInfo) -> Bool {
-        manager.ddcDevices[d.id] != nil
-    }
-
-    /// 后台读取亮度、对比度，读完回到主线程更新
+    /// 后台读取亮度，读完回到主线程更新
     func readAllStates() {
         let snapshot = displays
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
             var b: [CGDirectDisplayID: Int] = [:]
-            var c: [CGDirectDisplayID: Int] = [:]
             for d in snapshot {
                 if let v = self.manager.brightness[d.id]?.read() { b[d.id] = v }
-                if let dev = self.manager.ddcDevices[d.id] {
-                    if let r = dev.read(vcp: 0x12), r.max > 0 { c[d.id] = r.current * 100 / r.max }
-                }
             }
             DispatchQueue.main.async {
                 self.brightness.merge(b) { _, new in new }
-                self.contrast.merge(c) { _, new in new }
             }
         }
     }
@@ -91,15 +81,6 @@ final class AppModel: ObservableObject {
     func setBrightness(_ id: CGDirectDisplayID, _ value: Int) {
         brightness[id] = value
         manager.brightness[id]?.set(value)
-    }
-
-    func setContrast(_ id: CGDirectDisplayID, _ value: Int) {
-        contrast[id] = value
-        guard let dev = manager.ddcDevices[id] else { return }
-        DispatchQueue.global(qos: .userInitiated).async {
-            guard let max = dev.read(vcp: 0x12)?.max, max > 0 else { return }
-            dev.write(vcp: 0x12, value: value * max / 100)
-        }
     }
 
     func setTint(_ id: CGDirectDisplayID, _ kelvin: Int) {

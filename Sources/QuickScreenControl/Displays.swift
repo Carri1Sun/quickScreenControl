@@ -22,7 +22,7 @@ struct DisplayInfo {
 final class DisplayManager {
     private(set) var displays: [DisplayInfo] = []
     private(set) var brightness: [CGDirectDisplayID: BrightnessController] = [:]
-    /// 外接屏的 DDC 通道，用于对比度等其他 VCP 控制
+    /// 外接屏的 DDC 通道（亮度等 VCP 控制）
     private(set) var ddcDevices: [CGDirectDisplayID: DDCDevice] = [:]
 
     init() {
