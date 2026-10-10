@@ -90,4 +90,4 @@ open /Applications/QuickScreenControl.app
 
 ## 许可
 
-未指定。
+本项目基于 [MIT License](LICENSE) 发布。
