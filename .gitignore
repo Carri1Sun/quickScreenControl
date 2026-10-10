@@ -1,0 +1,29 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# 构建产物
+build/
+*.app
+*.dmg
+
+# 本地运行时数据（配置、缓存）
+config.json
+
+# macOS / Xcode
+.DS_Store
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*~
